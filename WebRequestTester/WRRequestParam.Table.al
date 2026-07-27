@@ -8,6 +8,7 @@ table 71201 "WR Request Param"
 {
     Caption = 'Web Request Parameter';
     DataClassification = CustomerContent;
+    Permissions = tabledata "WR Request Param" = RIMD;
 
     fields
     {

@@ -8,6 +8,7 @@ table 71203 "WR Result"
 {
     Caption = 'Web Request Result';
     DataClassification = CustomerContent;
+    Permissions = tabledata "WR Result" = RIMD;
 
     fields
     {

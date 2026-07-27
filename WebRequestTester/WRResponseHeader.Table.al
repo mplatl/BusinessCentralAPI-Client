@@ -7,6 +7,7 @@ table 71204 "WR Response Header"
 {
     Caption = 'Web Request Response Header';
     DataClassification = CustomerContent;
+    Permissions = tabledata "WR Response Header" = RIMD;
 
     fields
     {

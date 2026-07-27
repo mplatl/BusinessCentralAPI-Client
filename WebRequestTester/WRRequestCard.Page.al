@@ -99,7 +99,6 @@ page 71201 "WR Request Card"
                 {
                     ApplicationArea = All;
                     Caption = 'Send Request';
-                    Image = Play;
                     Promoted = true;
                     PromotedIsBig = true;
 
