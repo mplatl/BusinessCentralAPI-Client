@@ -1,7 +1,7 @@
 # AL
 .alpackages/
-.vscode/settings.json
-.vscode/*.code-snippets
+.vscode/
+!.vscode/launch.json
 # App file
 *.app
 # Symbol files
