@@ -7,6 +7,7 @@ page 71200 "WR Request List"
 {
     Caption = 'Web Requests';
     PageType = List;
+    CardPageId = "WR Request Card";
     SourceTable = "WR Request";
     UsageCategory = Tasks;
     ApplicationArea = All;

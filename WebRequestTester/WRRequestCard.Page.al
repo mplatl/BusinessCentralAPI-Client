@@ -108,7 +108,9 @@ page 71201 "WR Request Card"
                         WRResult: Record "WR Result";
                     begin
                         CurrPage.SaveRecord();
+                        Commit();
                         WREngine.ExecuteRequest(Rec);
+                        Commit();
                         WRResult.SetRange("Request No.", Rec."No.");
                         if WRResult.FindFirst() then
                             PAGE.RunModal(71203, WRResult);
