@@ -1,0 +1,10 @@
+# AL
+.alpackages/
+.vscode/settings.json
+.vscode/*.code-snippets
+# App file
+*.app
+# Symbol files
+*.appref
+# Temp
+temp/

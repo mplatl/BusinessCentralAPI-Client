@@ -1,0 +1,32 @@
+{
+  "id": "3a7f1e2c-8b5d-4f6a-9c0e-1d2b3a4c5e6f",
+  "name": "Web Request Tester",
+  "publisher": "Harmonia GmbH",
+  "version": "1.0.0.0",
+  "brief": "REST API Client zum Testen von WebRequests innerhalb von Business Central",
+  "description": "Ermöglicht das Erstellen, Speichern und Ausführen von HTTP-Requests (GET, POST, PUT, PATCH, DELETE) mit Headern, Parametern und Body. Inklusive Ergebnisanzeige.",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "logo": "",
+  "dependencies": [],
+  "screenshots": [],
+  "platform": "1.0.0.0",
+  "application": "28.0.0.0",
+  "idRanges": [
+    {
+      "from": 71200,
+      "to": 71290
+    }
+  ],
+  "resourceExposurePolicy": {
+    "allowDebugging": true,
+    "allowDownloadingSource": true,
+    "includeSourceInSymbolFile": true
+  },
+  "runtime": "13.0",
+  "features": [
+    "NoImplicitWith"
+  ]
+}
