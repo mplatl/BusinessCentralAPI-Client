@@ -1,7 +1,7 @@
 {
   "id": "3a7f1e2c-8b5d-4f6a-9c0e-1d2b3a4c5e6f",
   "name": "Web Request Tester",
-  "publisher": "Harmonia GmbH",
+  "publisher": "Michael Platl",
   "version": "1.0.0.0",
   "brief": "REST API Client zum Testen von WebRequests",
   "description": "Erstellen, Speichern und Ausführen von HTTP-Requests (GET, POST, PUT, PATCH, DELETE) mit Headern, Parametern und Body. Inklusive Ergebnisanzeige.",
