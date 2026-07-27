@@ -1,6 +1,6 @@
 namespace Harmonia.WebRequestTester;
 
-enum 71202 "WR Param Type" : Integer
+enum 71202 "WR Param Type"
 {
     Extensible = false;
 

@@ -1,0 +1,25 @@
+{
+  "version": "0.2",
+  "toolInfo": {
+    "toolName": "Microsoft (R) AL Compiler",
+    "productVersion": "18.0.38",
+    "fileVersion": "18.0.38"
+  },
+  "issues": [
+    {
+      "ruleId": "AL1009",
+      "locations": [
+      ],
+      "fullMessage": "Unrecognized option: '/WarningsAsErrors:-'",
+      "properties": {
+        "severity": "Error",
+        "defaultSeverity": "Error",
+        "category": "Compiler",
+        "helpLink": "https://learn.microsoft.com/dynamics365/business-central/dev-itpro/developer/diagnostics/diagnostic-al1009?wt.mc_id=d365bc_inproduct_alextension",
+        "isEnabledByDefault": "True",
+        "isSuppressedInSource": "False",
+        "customTags": "Compiler;Telemetry;NotConfigurable"
+      }
+    }
+  ]
+}

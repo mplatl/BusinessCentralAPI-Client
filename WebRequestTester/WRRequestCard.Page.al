@@ -21,33 +21,27 @@ page 71201 "WR Request Card"
                 field("No."; Rec."No.")
                 {
                     ApplicationArea = All;
-                    ToolTip = 'Specifies the number of the web request.';
                     Editable = false;
                 }
                 field(Description; Rec.Description)
                 {
                     ApplicationArea = All;
-                    ToolTip = 'Enter a description for this request.';
                 }
                 field("Endpoint URL"; Rec."Endpoint URL")
                 {
                     ApplicationArea = All;
-                    ToolTip = 'Enter the full endpoint URL (e.g. https://api.example.com/endpoint).';
                 }
                 field(Method; Rec.Method)
                 {
                     ApplicationArea = All;
-                    ToolTip = 'Select the HTTP method.';
                 }
                 field("Header Content-Type"; Rec."Header Content-Type")
                 {
                     ApplicationArea = All;
-                    ToolTip = 'Enter the Content-Type header value, e.g. application/json.';
                 }
                 field("Timeout (ms)"; Rec."Timeout (ms)")
                 {
                     ApplicationArea = All;
-                    ToolTip = 'Timeout in milliseconds. Default 30000.';
                 }
                 field("Last Response Status"; Rec."Last Response Status")
                 {
@@ -62,7 +56,6 @@ page 71201 "WR Request Card"
                 field(Blocked; Rec.Blocked)
                 {
                     ApplicationArea = All;
-                    ToolTip = 'Block this request from being executed.';
                 }
                 field(User; Rec.User)
                 {
@@ -70,34 +63,25 @@ page 71201 "WR Request Card"
                     Editable = false;
                 }
             }
-            group(Body)
+            group("Body")
             {
                 Caption = 'Body';
-                Visible = IsBodyVisible();
-
                 field("Body Type"; Rec."Body Type")
                 {
                     ApplicationArea = All;
-                    ToolTip = 'Select the body content type.';
-                    trigger OnValidate()
-                    begin
-                        CurrPage.Update(false);
-                    end;
                 }
                 field("Body Content"; Rec."Body Content")
                 {
                     ApplicationArea = All;
                     MultiLine = true;
-                    ToolTip = 'Enter the request body content.';
                 }
             }
             group("Parameters")
             {
                 Caption = 'Parameters';
-                part("WR Request Params"; "WR Request Param List")
+                part("WRParamList"; "WR Request Param List")
                 {
                     ApplicationArea = All;
-                    Page = "WR Request Param List";
                     SubPageLink = "Request No." = field("No.");
                 }
             }
@@ -108,7 +92,7 @@ page 71201 "WR Request Card"
     {
         area(processing)
         {
-            group(Actions)
+            group("Actions")
             {
                 Caption = 'Actions';
                 action(SendRequest)
@@ -117,25 +101,18 @@ page 71201 "WR Request Card"
                     Caption = 'Send Request';
                     Image = Play;
                     Promoted = true;
-                    PromotedCategory = CategoryProcess;
                     PromotedIsBig = true;
-                    ToolTip = 'Execute the web request and show the result.';
 
                     trigger OnAction()
                     var
                         WREngine: Codeunit "WR Engine";
                         WRResult: Record "WR Result";
                     begin
-                        if Rec.Blocked then
-                            Error('This request is blocked and cannot be executed.');
-
                         CurrPage.SaveRecord();
                         WREngine.ExecuteRequest(Rec);
-
-                        // Ergebnis öffnen
                         WRResult.SetRange("Request No.", Rec."No.");
                         if WRResult.FindFirst() then
-                            PAGE.RunModal(PAGE::"WR Result", WRResult);
+                            PAGE.RunModal(71203, WRResult);
                     end;
                 }
                 action(ViewResult)
@@ -143,7 +120,6 @@ page 71201 "WR Request Card"
                     ApplicationArea = All;
                     Caption = 'View Last Result';
                     Image = View;
-                    ToolTip = 'View the last result of this request.';
 
                     trigger OnAction()
                     var
@@ -153,26 +129,13 @@ page 71201 "WR Request Card"
                             Error('No result available. Execute the request first.');
                         WRResult.SetRange("Request No.", Rec."No.");
                         if WRResult.FindFirst() then
-                            PAGE.RunModal(PAGE::"WR Result", WRResult);
+                            PAGE.RunModal(71203, WRResult);
                     end;
                 }
             }
         }
     }
 
-    trigger OnOpenPage()
-    begin
-        CurrPage.Update(false);
-    end;
-
-    local procedure IsBodyVisible(): Boolean
-    begin
-        case Rec.Method of
-            Rec.Method::GET,
-            Rec.Method::HEAD,
-            Rec.Method::OPTIONS:
-                exit(false);
-        end;
-        exit(true);
-    end;
+    var
+        IsBodyVisible: Boolean;
 }

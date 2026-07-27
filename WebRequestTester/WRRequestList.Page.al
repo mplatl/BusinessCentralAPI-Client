@@ -74,9 +74,8 @@ page 71200 "WR Request List"
                     Rec.Init();
                     Rec."No." := GetNextNo();
                     Rec.Method := Rec.Method::GET;
-                    Rec.Timeout := 30000;
                     Rec.Insert(true);
-                    PAGE.RunModal(PAGE::"WR Request Card", Rec);
+                    PAGE.RunModal(71201, Rec);
                 end;
             }
         }

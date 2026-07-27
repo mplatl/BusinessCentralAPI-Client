@@ -1,6 +1,6 @@
 namespace Harmonia.WebRequestTester;
 
-enum 71201 "WR Body Type" : Integer
+enum 71201 "WR Body Type"
 {
     Extensible = false;
 

@@ -1,7 +1,5 @@
 namespace Harmonia.WebRequestTester;
 
-using System.Net.Http;
-
 /// <summary>
 /// Führt WebRequests aus und speichert das Ergebnis (Response Body + Header).
 /// </summary>
@@ -20,9 +18,7 @@ codeunit 71200 "WR Engine"
     /// </summary>
     procedure ExecuteRequest(var WRRequest: Record "WR Request")
     var
-        BodyBlob: Codeunit "Temp Blob";
         BodyText: Text;
-        ResponseBodyBlob: Codeunit "Temp Blob";
         ResponseBodyText: Text;
         WRRequestParam: Record "WR Request Param";
         WRResult: Record "WR Result";
@@ -30,132 +26,83 @@ codeunit 71200 "WR Engine"
         StartTime: DateTime;
         EndTime: Integer;
         Url: Text;
-        i: Integer;
-        LineNo: Integer;
-        Headers: List of [Text];
-        KeyValue: List of [Text];
+        BodyInStream: InStream;
+        ResponseOutStream: OutStream;
+        StatusCodeInteger: Integer;
     begin
-        // ── URL mit Query-Parametern aufbauen ──
+        // ── URL zusammenbauen ──
         Url := WRRequest."Endpoint URL";
-        WRRequestParam.SetRange("Request No.", WRRequest."No.");
-        WRRequestParam.SetRange("Param Type", WRRequestParam."Param Type"::"Query Parameter");
-        WRRequestParam.SetRange(Enabled, true);
-        i := 0;
-        if WRRequestParam.FindSet() then begin
-            if Url.Contains('?') then
-                Url := Url + '&'
-            else
-                Url := Url + '?';
-            repeat
-                if i > 0 then
-                    Url := Url + '&';
-                Url := Url + WebUtility.UrlEncode(WRRequestParam.Name) + '=' + WebUtility.UrlEncode(WRRequestParam.Value);
-                i := i + 1;
-            until WRRequestParam.Next() = 0;
-        end;
 
         // ── HttpRequestMessage vorbereiten ──
-        HttpRequestMessage.SetMethod(StringToHttpMethod(WRRequest.Method));
         HttpRequestMessage.SetRequestUri(Url);
 
-        // ── Benutzerdefinierte Header ──
-        WRRequestParam.Reset();
-        WRRequestParam.SetRange("Request No.", WRRequest."No.");
-        WRRequestParam.SetRange("Param Type", WRRequestParam."Param Type"::Header);
-        WRRequestParam.SetRange(Enabled, true);
-        if WRRequestParam.FindSet() then
-            repeat
-                HttpRequestMessage.AddHeader(WRRequestParam.Name, WRRequestParam.Value);
-            until WRRequestParam.Next() = 0;
+        case WRRequest.Method of
+            WRRequest.Method::GET: HttpRequestMessage.Method('GET');
+            WRRequest.Method::POST: HttpRequestMessage.Method('POST');
+            WRRequest.Method::PUT: HttpRequestMessage.Method('PUT');
+            WRRequest.Method::PATCH: HttpRequestMessage.Method('PATCH');
+            WRRequest.Method::DELETE: HttpRequestMessage.Method('DELETE');
+            WRRequest.Method::HEAD: HttpRequestMessage.Method('HEAD');
+            WRRequest.Method::OPTIONS: HttpRequestMessage.Method('OPTIONS');
+        end;
 
-        // ── Body setzen (nur bei Methoden, die Body erlauben) ──
+        // ── Body setzen ──
         if WRRequest."Body Content".HasValue() then begin
-            BodyBlob := WRRequest."Body Content".CreateTempBlob();
-            BodyText := BodyBlob.ReadText(TextEncoding.UTF8);
+            WRRequest."Body Content".CreateInStream(BodyInStream, TextEncoding::UTF8);
+            BodyInStream.ReadText(BodyText);
 
-            HttpContent.Init();
-            HttpContent.Write(BodyText);
-
-            if WRRequest."Header Content-Type" <> '' then
-                HttpContent.SetContentType(WRRequest."Header Content-Type")
-            else
-                HttpContent.SetContentType('application/json');
-
-            HttpRequestMessage.SetContent(HttpContent);
+            HttpRequestMessage.Content().Clear();
+            HttpContent.WriteFrom(BodyText);
+            HttpRequestMessage.Content := HttpContent;
         end;
 
-        // ── Timeout ──
-        HttpClient.SetTimeout(WRRequest."Timeout (ms)");
+        // ── Timeout setzen und senden ──
+        HttpClient.Clear();
+        HttpClient.Timeout(WRRequest."Timeout (ms)");
 
-        // ── Ausführen ──
         StartTime := CurrentDateTime();
-        HttpClient.Send(HttpRequestMessage, HttpResponseMessage);
-        EndTime := CurrentDateTime() - StartTime;
-        if EndTime < 0 then
-            EndTime := 0;
-
-        // ── Response Body auslesen ──
-        if HttpResponseMessage.IsBlockedByEnvironment() then begin
-            ResponseBodyText := 'Request blocked by environment. Check that the endpoint is allowed in Admin Center.';
-        end else begin
-            if HttpResponseMessage.GetContent(HttpContent) then begin
-                ResponseBodyText := HttpContent.Read();
-            end else
-                ResponseBodyText := '';
+        if not HttpClient.Send(HttpRequestMessage, HttpResponseMessage) then begin
+            if HttpResponseMessage.IsBlockedByEnvironment() then
+                ResponseBodyText := 'Blocked by environment. Check Admin Center.'
+            else
+                ResponseBodyText := 'Connection failed: ' + HttpRequestMessage.GetRequestUri();
+            EndTime := CurrentDateTime() - StartTime;
+            if EndTime < 0 then EndTime := 0;
+            SaveResult(WRRequest, WRResult, ResponseBodyText, 0, EndTime);
+            exit;
         end;
 
-        ResponseBodyBlob.FromText(ResponseBodyText, TextEncoding.UTF8);
+        EndTime := CurrentDateTime() - StartTime;
+        if EndTime < 0 then EndTime := 0;
+
+        // ── Status-Code und Body ──
+        StatusCodeInteger := HttpResponseMessage.HttpStatusCode();
+        HttpResponseMessage.Content().ReadAs(ResponseBodyText);
 
         // ── Ergebnis speichern ──
+        SaveResult(WRRequest, WRResult, ResponseBodyText, StatusCodeInteger, EndTime);
+    end;
+
+    local procedure SaveResult(var WRRequest: Record "WR Request"; var WRResult: Record "WR Result"; ResponseBody: Text; StatusCode: Integer; ResponseTime: Integer)
+    var
+        ResponseOutStream: OutStream;
+    begin
         WRResult.SetRange("Request No.", WRRequest."No.");
         WRResult.DeleteAll();
 
         WRResult.Init();
         WRResult."Request No." := WRRequest."No.";
-        WRResult."Response Status" := Format(HttpResponseMessage.GetStatusCode()) + ' ' + HttpResponseMessage.GetReasonPhrase();
-        WRResult."Response Time (ms)" := EndTime;
+        WRResult."Response Status" := Format(StatusCode);
+        WRResult."Response Time (ms)" := ResponseTime;
         WRResult."Executed At" := CurrentDateTime();
         WRResult."Executed By" := UserId();
-        WRResult."Response Body".SetValue(ResponseBodyBlob);
+
+        WRResult."Response Body".CreateOutStream(ResponseOutStream, TextEncoding::UTF8);
+        ResponseOutStream.WriteText(ResponseBody);
         WRResult.Insert();
 
-        // ── Status in Request zurückschreiben ──
         WRRequest."Last Response Status" := WRResult."Response Status";
-        WRRequest."Last Response Time (ms)" := EndTime;
+        WRRequest."Last Response Time (ms)" := ResponseTime;
         WRRequest.Modify();
-
-        // ── Response-Header speichern ──
-        WRResponseHeader.SetRange("Request No.", WRRequest."No.");
-        WRResponseHeader.DeleteAll();
-
-        LineNo := 0;
-        Headers := HttpResponseMessage.GetHeaders();
-        if Headers.Count > 0 then begin
-            for i := 0 to Headers.Count - 1 do begin
-                LineNo := LineNo + 10000;
-                KeyValue := Headers.Get(i).Split(':');
-                if KeyValue.Count >= 2 then begin
-                    WRResponseHeader.Init();
-                    WRResponseHeader."Request No." := WRRequest."No.";
-                    WRResponseHeader."Line No." := LineNo;
-                    WRResponseHeader.Name := KeyValue.Get(0);
-                    WRResponseHeader.Value := KeyValue.Get(1);
-                    WRResponseHeader.Insert();
-                end;
-            end;
-        end;
-    end;
-
-    local procedure StringToHttpMethod(Method: Enum "WR Method"): Text
-    begin
-        case Method of
-            Method::GET: exit('GET');
-            Method::POST: exit('POST');
-            Method::PUT: exit('PUT');
-            Method::PATCH: exit('PATCH');
-            Method::DELETE: exit('DELETE');
-            Method::HEAD: exit('HEAD');
-            Method::OPTIONS: exit('OPTIONS');
-        end;
     end;
 }

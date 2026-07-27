@@ -3,7 +3,7 @@ namespace Harmonia.WebRequestTester;
 /// <summary>
 /// HTTP-Methoden für WebRequests.
 /// </summary>
-enum 71200 "WR Method" : Integer
+enum 71200 "WR Method"
 {
     Extensible = false;
 
