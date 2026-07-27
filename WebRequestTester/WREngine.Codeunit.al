@@ -11,7 +11,7 @@ codeunit 71200 "WR Engine"
         HttpClient: HttpClient;
         HttpRequestMessage: HttpRequestMessage;
         HttpResponseMessage: HttpResponseMessage;
-        HttpContent: HttpContent;
+        RequestContent: HttpContent;
 
     /// <summary>
     /// Führt den übergebenen WebRequest aus und speichert das Ergebnis.
@@ -52,8 +52,8 @@ codeunit 71200 "WR Engine"
             BodyInStream.ReadText(BodyText);
 
             HttpRequestMessage.Content().Clear();
-            HttpContent.WriteFrom(BodyText);
-            HttpRequestMessage.Content := HttpContent;
+            RequestContent.WriteFrom(BodyText);
+            HttpRequestMessage.Content := RequestContent;
         end;
 
         // ── Timeout setzen und senden ──
@@ -77,10 +77,18 @@ codeunit 71200 "WR Engine"
 
         // ── Status-Code und Body ──
         StatusCodeInteger := HttpResponseMessage.HttpStatusCode();
-        HttpResponseMessage.Content().ReadAs(ResponseBodyText);
+        ResponseBodyText := ReadResponseBody();
 
         // ── Ergebnis speichern ──
         SaveResult(WRRequest, WRResult, ResponseBodyText, StatusCodeInteger, EndTime);
+    end;
+
+    local procedure ReadResponseBody(): Text
+    var
+        ResponseText: Text;
+    begin
+        HttpResponseMessage.Content().ReadAs(ResponseText);
+        exit(ResponseText);
     end;
 
     local procedure SaveResult(var WRRequest: Record "WR Request"; var WRResult: Record "WR Result"; ResponseBody: Text; StatusCode: Integer; ResponseTime: Integer)
